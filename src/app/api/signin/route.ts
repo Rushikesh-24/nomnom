@@ -1,6 +1,7 @@
 import { turso } from "@/lib/tursoclient";
 import { compare } from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
@@ -44,7 +45,18 @@ export async function POST(request: Request) {
       expiresIn: "1h",
     });
 
-    return Response.json({ message: "Signin successful", token });
+    const response = NextResponse.json({ message: "Signin successful", token });
+    
+    response.cookies.set("token", token, {
+      httpOnly: true, // Prevents client-side JS from reading the cookie
+      secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+      sameSite: "strict",
+      path: "/", // Available on all routes
+      maxAge: 3600, // 1 hour in seconds
+    });
+
+    return response;
+    
   } catch (error) {
     console.error("Unexpected error in signin route:", error);
     if (error instanceof SyntaxError) {
