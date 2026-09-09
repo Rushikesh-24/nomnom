@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
 // Define protected routes
 const protectedRoutes = ["/dashboard", "/menu", "/orders", "/profile"];
@@ -8,7 +8,7 @@ const protectedRoutes = ["/dashboard", "/menu", "/orders", "/profile"];
 // Define public routes
 const publicRoutes = ["/signin", "/signup", "/api/signin", "/api/signup"];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // ✅ Allow static files & Next internals
@@ -62,7 +62,8 @@ export function middleware(request: NextRequest) {
   // ✅ If token exists → verify
   if (token) {
     try {
-      jwt.verify(token, process.env.JWT_SECRET as string);
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+      await jwtVerify(token, secret);
 
       // 🚫 Prevent logged-in users from accessing auth pages
       if (pathname === "/signin" || pathname === "/signup") {
